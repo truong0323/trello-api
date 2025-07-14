@@ -15,7 +15,7 @@ const START_SERVER = () =>{
 
     // console.log( await GET_DB().listCollections().toArray());
    
-    res.end('<h1>Hello World!</h1><hr>')
+    res.end('<h1>Hello World!</h1><hr>');
   })
 
   app.listen(env.APP_PORT, env.APP_HOST, () => {
