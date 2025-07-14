@@ -5,28 +5,49 @@
  */
 
 import express from 'express'
-import { mapOrder } from '~/utils/sorts.js'
+import exitHook from 'async-exit-hook'
+import { CONNECT_DB , GET_DB ,CLOSE_DB } from '~/config/mongodb'
+import {env }from '~/config/environment'
+const START_SERVER = () =>{
+  const app = express()
 
-const app = express()
+  app.get('/', async(req, res) => {
 
-const hostname = 'localhost'
-const port = 8017
+    // console.log( await GET_DB().listCollections().toArray());
+   
+    res.end('<h1>Hello World!</h1><hr>')
+  })
 
-app.get('/', (req, res) => {
-  // Test Absolute import mapOrder
-  console.log(mapOrder(
-    [ { id: 'id-1', name: 'One' },
-      { id: 'id-2', name: 'Two' },
-      { id: 'id-3', name: 'Three' },
-      { id: 'id-4', name: 'Four' },
-      { id: 'id-5', name: 'Five' } ],
-    ['id-5', 'id-4', 'id-2', 'id-3', 'id-1'],
-    'id'
-  ))
-  res.end('<h1>Hello World!</h1><hr>')
-})
+  app.listen(env.APP_PORT, env.APP_HOST, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Hello ${env.AUTHOR}, I am running at http://${ env.APP_HOST }:${ env.APP_PORT }/`)
+  })
+  exitHook(async()=> {
+    console.log( '4.Sever is shutting down');
+    await CLOSE_DB()
+     console.log( '5.Disconnected from MONGODB Colud Atlas');
+  })
+}
+//Chỉ khi kết nối database thành công thì mới Start Serve Back-end lên
+(async () => {
+  try {
+    console.log('connecting to MONGODB Cloud Atlas');
+    await CONNECT_DB()
+    console.log('connected to MONGODB Cloud Atlas');
+    //khởi động serve backend sau khi connect db thành công
+     START_SERVER()
+  }catch(error) {
+    console.log(error);
+    // process.exit(0)
+  }
+}) ()
 
-app.listen(port, hostname, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Hello Trung Quan Dev, I am running at ${ hostname }:${ port }/`)
-})
+
+// CONNECT_DB()
+//   .then(() => console.log('connect to MONGODB Cloud Atlas'))
+//   .then(()=> START_SERVER())
+//   .catch(error => {
+//     console.log(error)
+//     process.exit(0)
+//   })
+
