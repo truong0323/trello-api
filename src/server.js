@@ -8,15 +8,11 @@ import express from 'express'
 import exitHook from 'async-exit-hook'
 import { CONNECT_DB , GET_DB ,CLOSE_DB } from '~/config/mongodb'
 import {env }from '~/config/environment'
+import {APIs_V1} from '~/routes/v1'
 const START_SERVER = () =>{
   const app = express()
 
-  app.get('/', async(req, res) => {
-
-    // console.log( await GET_DB().listCollections().toArray());
-   
-    res.end('<h1>Hello World!</h1><hr>');
-  })
+  app.use('/v1', APIs_V1)
 
   app.listen(env.APP_PORT, env.APP_HOST, () => {
     // eslint-disable-next-line no-console
@@ -31,7 +27,6 @@ const START_SERVER = () =>{
 //Chỉ khi kết nối database thành công thì mới Start Serve Back-end lên
 
 
-//dang tesst 
 (async () => {
   try {
     console.log('connecting to MONGODB Cloud Atlas');
