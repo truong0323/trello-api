@@ -12,10 +12,7 @@ const createNew = async (req, res, next) => {
         // điều hướng dữ liệu sang service
         const createBoard = await boardService.createNew(req.body)
 
-        res.status(StatusCodes.CREATED).json({ message: 'POST from Controller: API create new board ',
-            createBoard
-            
-         }) 
+        res.status(StatusCodes.CREATED).json({  createBoard }) 
     }
     catch (error) {
         
