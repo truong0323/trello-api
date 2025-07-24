@@ -10,9 +10,9 @@ const createNew = async (req, res, next) => {
        
         // console.log('req.body : ',req.body);
         // điều hướng dữ liệu sang service
-        const createBoard = await boardService.createNew(req.body)
+        const createdBoard = await boardService.createNew(req.body)
 
-        res.status(StatusCodes.CREATED).json({  createBoard }) 
+        res.status(StatusCodes.CREATED).json({  createdBoard }) 
     }
     catch (error) {
         

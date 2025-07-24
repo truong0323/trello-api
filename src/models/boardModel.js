@@ -4,7 +4,7 @@
  * "A bit of fragrance clings to the hand that gives flowers!"
  */
 import Joi  from 'joi'
-import { ObjectId } from 'mongodb'
+import { ObjectId, ReturnDocument } from 'mongodb'
 import { OBJECT_ID_RULE,OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 import { GET_DB } from '~/config/mongodb'
 import { columnModel } from '~/models/columnModel'
@@ -76,12 +76,28 @@ const getDetails = async(id) => {
         throw new Error(error)
     }
 }
+//nhiệm vụ của function này là cập nhật push 1 giá trị columnId vào cuối mảng columnOrderIds
+const pushColumnOrderIds = async (column) =>{
+    try {
+        const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+            { _id: new ObjectId(String(column.boardId)),},
+            { $push : { columnOrderIds: new ObjectId(String(column._id)) } },
+            { ReturnDocument: 'after' } //trả về bản ghi sau khi đã cập nhật
+            
+        )
+        return result.value
+    } catch (error) {
+        throw new Error(error)
+    }
+}
+
 export const boardModel = {
     BOARD_COLLECTION_NAME,
     BOARD_COLLECTION_SCHEMA,
     createNew,
     findOneById,
-    getDetails
+    getDetails,
+    pushColumnOrderIds
 }
 //boardID: 687a4e1419077f7ff489e057
 //columnid: 687a55dfafe5d61253f35ae6
