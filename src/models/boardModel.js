@@ -4,7 +4,7 @@
  * "A bit of fragrance clings to the hand that gives flowers!"
  */
 import Joi  from 'joi'
-import { ObjectId, ReturnDocument } from 'mongodb'
+import { ObjectId, returnDocument } from 'mongodb'
 import { OBJECT_ID_RULE,OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 import { GET_DB } from '~/config/mongodb'
 import { columnModel } from '~/models/columnModel'
@@ -20,11 +20,13 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
     columnOrderIds: Joi.array().items(
         Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
     ).default([]),
-    createAt : Joi.date().timestamp('javascript').default(Date.now),
+    createdAt : Joi.date().timestamp('javascript').default(Date.now),
     updatedAt: Joi.date().timestamp('javascript').default(null),
     _destroy: Joi.boolean().default(false)
 
 })
+//chỉ định những hàm mà chúng  ta không muốn cho phép cập nhật trong hầm update
+const INVALID_UPDATE_FIELDS = ['_id', 'createdAt']
 const validateBeforeCreate = async(data) => {
     return await BOARD_COLLECTION_SCHEMA.validateAsync(data, {abortEarly : false})
 }
@@ -82,22 +84,46 @@ const pushColumnOrderIds = async (column) =>{
         const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
             { _id: new ObjectId(String(column.boardId)),},
             { $push : { columnOrderIds: new ObjectId(String(column._id)) } },
-            { ReturnDocument: 'after' } //trả về bản ghi sau khi đã cập nhật
+            { returnDocument: 'after' } //trả về bản ghi sau khi đã cập nhật
             
         )
-        return result.value
+        return result
     } catch (error) {
         throw new Error(error)
     }
 }
+const update = async (boardId , updateData) =>{
+    try {
+        //lọc những field mà chúng ta không cho phép cập nhật lih tinh 
+        Object.keys(updateData).forEach(fieldName => {
+            if(INVALID_UPDATE_FIELDS.includes(fieldName)) {
+                delete updateData[fieldName]
+            }
+        })
+         // đối với những dữ liệu mà liên quan đến ObjectId, biến đổi ở đây
+        if(updateData.columnOrderIds) {
+            updateData.columnOrderIds = updateData.columnOrderIds.map(_id => (new ObjectId(String(_id))))
+        }
 
+        const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+            { _id: new ObjectId(String(boardId)) },
+            { $set :  updateData },
+            { returnDocument: 'after' } //trả về bản ghi sau khi đã cập nhật
+            
+        )
+        return result
+    } catch (error) {
+        throw new Error(error)
+    }
+}
 export const boardModel = {
     BOARD_COLLECTION_NAME,
     BOARD_COLLECTION_SCHEMA,
     createNew,
     findOneById,
     getDetails,
-    pushColumnOrderIds
+    pushColumnOrderIds,
+    update
 }
 //boardID: 687a4e1419077f7ff489e057
 //columnid: 687a55dfafe5d61253f35ae6

@@ -6,12 +6,13 @@
  * YouTube: https://youtube.com/@trungquandev
  * "A bit of fragrance clings to the hand that gives flowers!"
  */
-import { ReturnDocument } from 'mongodb'
 import { slugify } from '~/utils/formatters'
 import { boardModel } from '~/models/boardModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { cloneDeep } from 'lodash'
+import { columnModel } from '~/models/columnModel'
+import { cardModel } from '~/models/cardModel'
 //xửu lí logic dữ liệu tùy đăccj thù dự án : ví dụ ccaanf tao cái slug ,tất nhiên slug này người dùng k thể nhập ,ở tầng service này sẽ tạo rồi đưa vào model
 const createNew = async(reqBody) =>{
     try {
@@ -60,8 +61,50 @@ const getDetails = async(boardId) =>{
         throw error
     }
 }
+const update = async(boardId,reqBody) =>{
+    try {
+        const updateData = {
+            ...reqBody,
+            updatedAt: Date.now()
+        }
+        const updatedBoard = await boardModel.update(boardId,updateData)
+        
 
+        return updatedBoard
+    } catch (error) {
+        throw error
+    }
+}
+const moveCardToDifferentColumn = async(reqBody) =>{
+    try {
+    //khi di chuyển card sang column khác chúng ta  có 3 bước:
+    // b1: Cập nhật mảng cardOrderIds của Column ban đầu chứa nó (hiểu bản chất là xóa cái _id của Card ra khỏi mảng)
+     await columnModel.update(reqBody.prevColumnId ,{ 
+        cardOrderIds: reqBody.prevCardOrderIds,
+        updatedAt: Date.now()
+
+      } )
+    
+    
+    // b2: Cập nhật mảng cardOrderIds của Column  tiếp theo (là thêm _id của Card vào mảng )
+      await columnModel.update(reqBody.nextColumnId ,{ 
+        cardOrderIds: reqBody.nextCardOrderIds,
+        updatedAt: Date.now()
+
+      } )
+
+    // b3: cập nhật lại trường columnId của cái Card đã kéo 
+       await cardModel.update(reqBody.currentCardId ,{
+        columnId: reqBody.nextColumnId
+       } )
+    
+
+        return {updateResult: 'Successfully' }
+    } catch (error) { throw error }
+}
 export const boardService = {
     createNew,
-    getDetails
+    getDetails,
+    update,
+    moveCardToDifferentColumn
 }
