@@ -8,6 +8,9 @@
  */
 import { columnModel } from '~/models/columnModel'
 import { boardModel } from '~/models/boardModel'
+import { cardModel } from '~/models/cardModel'
+import ApiError from '~/utils/ApiError'
+import { StatusCodes } from 'http-status-codes'
 //xửu lí logic dữ liệu tùy đăccj thù dự án : ví dụ ccaanf tao cái slug ,tất nhiên slug này người dùng k thể nhập ,ở tầng service này sẽ tạo rồi đưa vào model
 const createNew = async(reqBody) =>{
     try {
@@ -35,13 +38,13 @@ const createNew = async(reqBody) =>{
     }
 }
 
-const update = async(boardId,reqBody) =>{
+const update = async(columnId,reqBody) =>{
     try {
         const updateData = {
             ...reqBody,
             updatedAt: Date.now()
         }
-        const updatedColumn = await columnModel.update(boardId,updateData)
+        const updatedColumn = await columnModel.update(columnId,updateData)
         
 
         return updatedColumn
@@ -49,7 +52,26 @@ const update = async(boardId,reqBody) =>{
         throw error
     }
 }
+const deleteItem = async(columnId) =>{
+    try {
+        const targetColumn = await columnModel.findOneById(columnId)
+        if(!targetColumn) {
+            throw new ApiError(StatusCodes.NOT_FOUND , 'Column not found')
+        }
+        //xóa column
+        await columnModel.deleteOneById(columnId)
+
+
+        // xóa toàn bộ card thuộc column trên 
+        await cardModel.deleteManyByColumnId(columnId)
+        // xóa columnId trong mảng columnOrderIds của Board chứa nó
+        await boardModel.pullColumnOrderIds(targetColumn)
+        return { deleteResult: ' Column and its Cards deleted succesfully' }
+    } catch (error) {
+        throw error
+    }
+}
 
 export const columnService = {
-    createNew, update
+    createNew, update,deleteItem
 }
