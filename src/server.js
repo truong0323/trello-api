@@ -22,10 +22,21 @@ const START_SERVER = () =>{
   app.use('/v1', APIs_V1)
 // middleware xử lí lỗi tập trung
   app.use( errorHandlingMiddleware)
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
+//môi trường Production(cụ thể đang support Render.com)
+  if(env.BUILD_MODE === 'production') {
+    app.listen(process.env.PORT, () => {
     // eslint-disable-next-line no-console
-    console.log(`Hello ${env.AUTHOR}, I am running at http://${ env.APP_HOST }:${ env.APP_PORT }/`)
-  })
+      console.log(`Production: Hello ${env.AUTHOR}, back-end Server is running at Port: ${ env.APP_PORT }`)
+    })
+  }
+  else {
+    // đây là môi trường localhost
+    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    // eslint-disable-next-line no-console
+      console.log(`Local Dev: Hello ${env.AUTHOR}, back-end Server is running at http://${ env.LOCAL_DEV_APP_HOST }:${ env.LOCAL_DEV_APP_PORT }/`)
+    })
+  }
+  
   exitHook(async()=> {
     console.log( '4.Sever is shutting down');
     await CLOSE_DB()
