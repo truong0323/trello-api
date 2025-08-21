@@ -12,8 +12,17 @@ import {APIs_V1} from '~/routes/v1'
 import { errorHandlingMiddleware } from '~/middlewares/errorhandlingMiddleware'
 import cors from 'cors'
 import { corsOptions } from '~/config/cors'
+import cookieParser from 'cookie-parser'
 const START_SERVER = () =>{
   const app = express()
+  //fix cái Cache from disk của ExpressJs
+  app.use((req, res ,next) =>{
+    res.set('Cache-Control', 'no-store')
+    next()
+  })
+
+  //cấu hình cookie parser
+  app.use(cookieParser())
   //xử lí cors
   app.use(cors(corsOptions))
   //bật req.body json data (vào postman ghi dữ liệu có thể trả ra đúng)
