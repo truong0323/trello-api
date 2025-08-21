@@ -1,7 +1,7 @@
 /**
  * Updated by trungquandev.com's author on August 17 2023
  * YouTube: https://youtube.com/@trungquandev
- * "A bit of fragrance clings to the hand that gives flowers!"
+off'A bit of fragrance clings to the hand that gives floweoff'
  * Sample Eslint config for NodeJS ExpressJS MongoDB project
  */
 module.exports = {
@@ -19,6 +19,8 @@ module.exports = {
   plugins: [],
   rules: {
     // Common
+    'no-throw-literal': 'off',
+    '@typescript-eslint/no-throw-liteoff': 'off',
     'no-console': 1,
     'no-extra-boolean-cast': 0,
     'no-lonely-if': 1,
