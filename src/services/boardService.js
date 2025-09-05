@@ -13,8 +13,9 @@ import { StatusCodes } from 'http-status-codes'
 import { cloneDeep } from 'lodash'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '~/utils/constants'
 //xửu lí logic dữ liệu tùy đăccj thù dự án : ví dụ ccaanf tao cái slug ,tất nhiên slug này người dùng k thể nhập ,ở tầng service này sẽ tạo rồi đưa vào model
-const createNew = async(reqBody) =>{
+const createNew = async(userId, reqBody) =>{
     try {
         const newBoard = {
             ...reqBody, 
@@ -22,7 +23,7 @@ const createNew = async(reqBody) =>{
         }
         //Gọi tới tnaagf Model để xử lý lưu bản ghi newBoard vào trong Database
 
-        const  createBoard = await boardModel.createNew(newBoard)
+        const  createBoard = await boardModel.createNew(userId, newBoard)
         //console.log(createBoard);
 
         //lấy bản ghi board sau khi gọi (tùy mục đích)
@@ -36,10 +37,10 @@ const createNew = async(reqBody) =>{
         throw error
     }
 }
-const getDetails = async(boardId) =>{
+const getDetails = async(userId, boardId) =>{
     try {
         
-        const board = await boardModel.getDetails(boardId)
+        const board = await boardModel.getDetails(userId, boardId)
         // trả kết quả về ,trong service luôn phải có return
         if(!board) {
             throw new ApiError(StatusCodes.NOT_FOUND , 'Board not found!!!')
@@ -102,9 +103,20 @@ const moveCardToDifferentColumn = async(reqBody) =>{
         return {updateResult: 'Successfully' }
     } catch (error) { throw error }
 }
+const getBoards = async (userId,page, itemsPerPage) =>{
+    try {
+        if(!page) page = DEFAULT_PAGE
+        if(!itemsPerPage) itemsPerPage = DEFAULT_ITEMS_PER_PAGE
+        const results =await boardModel.getBoards(userId , parseInt(page,10) , parseInt(itemsPerPage,10))
+        return results
+    } catch (error ) {
+        throw error
+    }
+}
 export const boardService = {
     createNew,
     getDetails,
     update,
-    moveCardToDifferentColumn
+    moveCardToDifferentColumn,
+    getBoards
 }
