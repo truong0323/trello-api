@@ -11,6 +11,7 @@ import { pickUser } from '~/utils/formatters'
 import { ResendProvider } from '~/providers/ResendProvider'
 import { env } from '~/config/environment'
 import { JWTProvider } from '~/providers/JwtProvider'
+import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
 const createNew = async (reqBody) => {
     try {
         //kiểm tra xem email đã tồn tại chưa
@@ -143,10 +144,51 @@ const refreshToken = async (clientRefreshToken) => {
 
     } catch (error) { throw error}
 }
+const update = async (userId , reqBody,userAvatarFile) => {
+    try {
+        const existUser = await userModel.findOneById(userId)
+        if (!existUser) throw new ApiError( StatusCodes.NOT_FOUND, 'Account not Found!')
+        if (!existUser.isActive) throw new ApiError( StatusCodes.NOT_ACCEPTABLE, 'Your account is not active!')
+        //Khởi tạo kết quả updated User ban đầu là empty
+        let updatedUser = {}
+        //trường hợp change password
+        if(reqBody.current_password && reqBody.new_password) {
+            //kiểm tra xem cái current_password đúng hay không
+            if(!bcryptjs.compareSync(reqBody.current_password , existUser.password) ) {
+                throw new ApiError (StatusCodes.NOT_ACCEPTABLE, 'Your Current Password is incorrect') 
 
+            }
+            //neeus current_password đúng thì hash mậtkhauar mới và update lại vào db:
+            updatedUser = await userModel.update(userId , {
+                password: bcryptjs.hashSync(reqBody.new_password, 8)
+            })
+        }
+        else if (userAvatarFile) {
+            //Truongwf hojwp upload file lên Cloud Storage ,cụ thể là Cloundinary
+            const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+            console.log('uploadResult: ',uploadResult);
+
+            //lưu lại URL của cái file ảnh vào trong DB
+            updatedUser = await userModel.update(userId , {
+                avatar: uploadResult.secure_url
+            })
+
+        }   
+        else{
+            // đây là trường hợp update những thoong tin chung như displayName
+            updatedUser = await userModel.update(userId , reqBody)
+        }
+        return pickUser(updatedUser)
+
+    } catch (error) {
+        throw error
+    }
+}
 export const userService = {
-    createNew,verifyAccount,
+    createNew,
+    verifyAccount,
     login,
-    refreshToken
+    refreshToken,
+    update
 
 }

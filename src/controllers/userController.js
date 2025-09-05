@@ -84,11 +84,23 @@ const refreshToken = async (req,res, next) => {
         next(new ApiError(StatusCodes.FORBIDDEN , 'please Sign In!(Error from refesh token'))
     }
 }
+const update = async (req,res,next ) => {
+    try {
+        const userId = req.jwtDecoded._id
+        const userAvatarFile = req.file
+        // console.log('controller - userAvatarFile: ', userAvatarFile);
+        const updateUser = await userService.update(userId , req.body, userAvatarFile)
+        res.status(StatusCodes.OK).json(updateUser)
+    } catch (error) {
+        next(error)
+    }
+}
 
 export const userController ={
     createNew,
     verifyAccount,
     login,
     logout,
-    refreshToken
+    refreshToken,
+    update
 }

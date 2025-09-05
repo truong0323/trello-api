@@ -13,6 +13,9 @@ import { errorHandlingMiddleware } from '~/middlewares/errorhandlingMiddleware'
 import cors from 'cors'
 import { corsOptions } from '~/config/cors'
 import cookieParser from 'cookie-parser'
+import http from 'http'
+import SocketIo  from 'socket.io'
+import { inviteUserToBoardSocket } from './sockets/inviteUserToBoardSocket'
 const START_SERVER = () =>{
   const app = express()
   //fix cái Cache from disk của ExpressJs
@@ -31,16 +34,28 @@ const START_SERVER = () =>{
   app.use('/v1', APIs_V1)
 // middleware xử lí lỗi tập trung
   app.use( errorHandlingMiddleware)
+
+  // Tạo một cái server mới bọc thằng app của express để làm real-time với socket.io
+  const server = http.createServer(app)
+  // khởi tạo  biến io với server và cors
+  const io = SocketIo(server, { cors: corsOptions })
+  io.on('connection',( socket) => {
+    // console.log('a user connected',socket.id)
+    //Lắng nghe sự kiện mà client emit lên có tên: FE_USER_INVITED_TO_BOARD
+    inviteUserToBoardSocket(socket)
+  })
+
 //môi trường Production(cụ thể đang support Render.com)
   if(env.BUILD_MODE === 'production') {
-    app.listen(process.env.PORT, () => {
+    //dungf server.listen thay vif app.listen vì lúc này server đã bao gồm express app và đã config socket.io
+    server.listen(process.env.PORT, () => {
     // eslint-disable-next-line no-console
       console.log(`Production: Hello ${env.AUTHOR}, back-end Server is running at Port: ${ process.env.PORT }`)
     })
   }
   else {
     // đây là môi trường localhost
-    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
     // eslint-disable-next-line no-console
       console.log(`Local Dev: Hello ${env.AUTHOR}, back-end Server is running at http://${ env.LOCAL_DEV_APP_HOST }:${ env.LOCAL_DEV_APP_PORT }/`)
     })
